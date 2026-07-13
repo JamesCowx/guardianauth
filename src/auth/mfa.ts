@@ -1,0 +1,4 @@
+﻿import { createHash, randomBytes } from 'crypto';
+export function generateTOTPSecret(): string { return randomBytes(20).toString('base64'); }
+export function generateTOTP(secret: string, window: number = 0): string { const time = Math.floor(Date.now() / 30000) + window; const timeBytes = Buffer.alloc(8); timeBytes.writeBigInt64BE(BigInt(time)); const hmac = createHash('sha1').update(Buffer.from(secret, 'base64')).update(timeBytes).digest(); const offset = hmac[hmac.length - 1] & 0xf; const code = ((hmac[offset] & 0x7f) << 24 | (hmac[offset + 1] & 0xff) << 16 | (hmac[offset + 2] & 0xff) << 8 | (hmac[offset + 3] & 0xff)) % 1000000; return String(code).padStart(6, '0'); }
+export function verifyTOTP(secret: string, code: string): boolean { return generateTOTP(secret) === code || generateTOTP(secret, -1) === code || generateTOTP(secret, 1) === code; }
